@@ -133,9 +133,33 @@ public class ABB<K, V> implements IMapeamento<K, V>{
      * @return o tamanho atualizado da árvore após a execução da operação de inserção.
      */
     public int inserir(K chave, V item) {
-    	
-    	// TODO
+    	raiz = inserir(raiz, chave, item);
         return tamanho;
+    }
+    
+    private No<K, V> inserir(No<K, V> raizArvore, K chave, V item) {
+    	
+    	if (raizArvore == null) {
+    		/// Se a raiz da árvore ou sub-árvore for null, a árvore/sub-árvore está vazia.
+    		/// Cria um novo nó com o item e a chave fornecidos.
+    		tamanho++;
+    		return new No<>(chave, item);
+    	}
+    	
+    	int comparacao = comparador.compare(chave, raizArvore.getChave());
+    	
+    	if (comparacao < 0) {
+    		/// Se a chave for menor que a chave da raiz, insere na sub-árvore esquerda.
+    		raizArvore.setEsquerda(inserir(raizArvore.getEsquerda(), chave, item));
+    	} else if (comparacao > 0) {
+    		/// Se a chave for maior que a chave da raiz, insere na sub-árvore direita.
+    		raizArvore.setDireita(inserir(raizArvore.getDireita(), chave, item));
+    	} else {
+    		/// Se a chave já existe, atualiza o item.
+    		raizArvore.setItem(item);
+    	}
+    	
+    	return raizArvore;
     }
 
     @Override 
@@ -149,9 +173,17 @@ public class ABB<K, V> implements IMapeamento<K, V>{
     }
 
     public String caminhamentoEmOrdem() {
-    	
-    	// TODO
-    	return null;
+    	StringBuilder sb = new StringBuilder();
+    	caminhamentoEmOrdem(raiz, sb);
+    	return sb.toString();
+    }
+    
+    private void caminhamentoEmOrdem(No<K, V> raizArvore, StringBuilder sb) {
+    	if (raizArvore != null) {
+    		caminhamentoEmOrdem(raizArvore.getEsquerda(), sb);
+    		sb.append(raizArvore.getItem().toString()).append("\n");
+    		caminhamentoEmOrdem(raizArvore.getDireita(), sb);
+    	}
     }
 
     @Override
@@ -161,9 +193,83 @@ public class ABB<K, V> implements IMapeamento<K, V>{
      * @return o valor associado ao item removido.
      */
     public V remover(K chave) {
+    	if (vazia()) {
+    		throw new NoSuchElementException("Árvore vazia!");
+    	}
     	
-    	// TODO
-    	return null;
+    	No<K, V> noRemovido = pesquisarNo(raiz, chave);
+    	if (noRemovido == null) {
+    		throw new NoSuchElementException("Item não encontrado!");
+    	}
+    	
+    	V itemRemovido = noRemovido.getItem();
+    	raiz = remover(raiz, chave);
+    	tamanho--;
+    	
+    	return itemRemovido;
+	}
+    
+    private No<K, V> pesquisarNo(No<K, V> raizArvore, K procurado) {
+    	if (raizArvore == null) {
+    		return null;
+    	}
+    	
+    	int comparacao = comparador.compare(procurado, raizArvore.getChave());
+    	
+    	if (comparacao == 0) {
+    		return raizArvore;
+    	} else if (comparacao < 0) {
+    		return pesquisarNo(raizArvore.getEsquerda(), procurado);
+    	} else {
+    		return pesquisarNo(raizArvore.getDireita(), procurado);
+    	}
+    }
+    
+    private No<K, V> remover(No<K, V> raizArvore, K chave) {
+    	if (raizArvore == null) {
+    		return null;
+    	}
+    	
+    	int comparacao = comparador.compare(chave, raizArvore.getChave());
+    	
+    	if (comparacao < 0) {
+    		raizArvore.setEsquerda(remover(raizArvore.getEsquerda(), chave));
+    	} else if (comparacao > 0) {
+    		raizArvore.setDireita(remover(raizArvore.getDireita(), chave));
+    	} else {
+    		// Nó encontrado - casos de remoção
+    		
+    		// Caso 1: nó sem filhos (folha)
+    		if (raizArvore.getEsquerda() == null && raizArvore.getDireita() == null) {
+    			return null;
+    		}
+    		
+    		// Caso 2: nó com apenas um filho à direita
+    		if (raizArvore.getEsquerda() == null) {
+    			return raizArvore.getDireita();
+    		}
+    		
+    		// Caso 3: nó com apenas um filho à esquerda
+    		if (raizArvore.getDireita() == null) {
+    			return raizArvore.getEsquerda();
+    		}
+    		
+    		// Caso 4: nó com dois filhos
+    		// Substitui pelo menor da sub-árvore direita (sucessor)
+    		No<K, V> sucessor = encontrarMinimo(raizArvore.getDireita());
+    		raizArvore.setChave(sucessor.getChave());
+    		raizArvore.setItem(sucessor.getItem());
+    		raizArvore.setDireita(remover(raizArvore.getDireita(), sucessor.getChave()));
+    	}
+    	
+    	return raizArvore;
+    }
+    
+    private No<K, V> encontrarMinimo(No<K, V> raizArvore) {
+    	while (raizArvore.getEsquerda() != null) {
+    		raizArvore = raizArvore.getEsquerda();
+    	}
+    	return raizArvore;
     }
 
 	@Override
